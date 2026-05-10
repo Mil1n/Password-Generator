@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MilinPass — генератор паролей</title>
+  <style>
+    :root {
+      --bg: #090d1a;
+      --card: rgba(255,255,255,.08);
+      --text: #eef3ff;
+      --muted: #9fb0d4;
+      --accent: #7c4dff;
+      --accent2: #00e5ff;
+      --ok: #00d084;
+      --warn: #ffb020;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 0% 0%, #1f1b57 0, transparent 60%),
+                  radial-gradient(1000px 600px at 100% 100%, #004d64 0, transparent 60%),
+                  var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .app {
+      width: min(900px, 100%);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 70px rgba(0,0,0,.45);
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+      padding: 24px;
+    }
+    @media (max-width: 820px){ .app{ grid-template-columns: 1fr; } }
+
+    h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); }
+    .subtitle { color: var(--muted); margin: 0 0 20px; }
+    .panel {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .pass-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    #password {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(5,10,24,.8);
+      color: #fff;
+      font-size: 16px;
+      letter-spacing: .6px;
+    }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 700;
+      transition: .2s transform, .2s opacity;
+    }
+    button:hover { transform: translateY(-1px); opacity: .95; }
+    .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent2)); }
+    .btn-soft { background: rgba(255,255,255,.13); }
+    .row { margin-top: 14px; }
+    label { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    input[type=range] { width: 100%; }
+    .checks { display: grid; gap: 10px; margin-top: 10px; }
+    .checks label { justify-content: start; gap: 10px; margin: 0; color: #dce6ff; }
+    .inline { display:flex; gap:8px; flex-wrap: wrap; margin-top:14px; }
+    .mini { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .meter { height: 10px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; }
+    #meterFill { height: 100%; width: 0; transition: .25s; }
+    #scoreText { margin-top: 6px; font-size: 14px; }
+    .history { max-height: 340px; overflow: auto; margin-top: 10px; display:grid; gap:8px; }
+    .item { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(0,0,0,.25); border-radius: 10px; padding: 9px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section>
+      <h1>MilinPass ⚡</h1>
+      <p class="subtitle">Стильный генератор паролей с оценкой силы и историей.</p>
+
+      <div class="panel">
+        <div class="pass-wrap">
+          <input id="password" readonly />
+          <button id="copyBtn" class="btn-soft">Копировать</button>
+        </div>
+
+        <div class="row">
+          <label for="length">Длина: <strong id="lenVal">20</strong></label>
+          <input id="length" type="range" min="8" max="64" value="20" />
+        </div>
+
+        <div class="checks">
+          <label><input type="checkbox" id="upper" checked /> A–Z</label>
+          <label><input type="checkbox" id="lower" checked /> a–z</label>
+          <label><input type="checkbox" id="numbers" checked /> 0–9</label>
+          <label><input type="checkbox" id="symbols" checked /> Символы</label>
+          <label><input type="checkbox" id="excludeAmbiguous" /> Исключить похожие (O0Il1)</label>
+        </div>
+
+        <div class="inline">
+          <button id="generateBtn" class="btn-primary">Сгенерировать</button>
+          <button id="passphraseBtn" class="btn-soft">Режим passphrase</button>
+        </div>
+
+        <div class="row">
+          <div class="mini">Сила пароля</div>
+          <div class="meter"><div id="meterFill"></div></div>
+          <div id="scoreText">—</div>
+        </div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <h3 style="margin-top:0">История (локально)</h3>
+        <p class="mini">Последние 10 паролей сохраняются в браузере.</p>
+        <div id="history" class="history"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+    const chars = {
+      upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
+      lower: 'abcdefghijkmnopqrstuvwxyz',
+      numbers: '23456789',
+      symbols: '!@#$%^&*()-_=+[]{};:,.<>/?'
+    };
+    const ambiguous = new Set('O0Il1');
+
+    function randomInt(max) {
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      return a[0] % max;
+    }
+
+    function buildPool() {
+      const selected = [];
+      if (el('upper').checked) selected.push(chars.upper);
+      if (el('lower').checked) selected.push(chars.lower);
+      if (el('numbers').checked) selected.push(chars.numbers);
+      if (el('symbols').checked) selected.push(chars.symbols);
+      if (!selected.length) return '';
+
+      let pool = selected.join('');
+      if (!el('excludeAmbiguous').checked) {
+        pool += 'O0Il1';
+      }
+      return pool;
+    }
+
+    function generatePassword() {
+      const len = Number(el('length').value);
+      const pool = buildPool();
+      if (!pool) return 'Выберите хотя бы один набор символов';
+
+      let out = '';
+      for (let i = 0; i < len; i++) {
+        let ch = pool[randomInt(pool.length)];
+        if (el('excludeAmbiguous').checked) {
+          while (ambiguous.has(ch)) ch = pool[randomInt(pool.length)];
+        }
+        out += ch;
+      }
+      return out;
+    }
+
+    function generatePassphrase() {
+      const words = ['neon', 'rocket', 'pixel', 'orbit', 'quantum', 'cipher', 'shadow', 'matrix', 'aurora', 'hyper'];
+      return Array.from({length: 4}, () => words[randomInt(words.length)]).join('-') + randomInt(100);
+    }
+
+    function scorePassword(p) {
+      if (!p || p.includes('Выберите')) return {score: 0, label: 'Нет данных'};
+      let score = Math.min(50, p.length * 2);
+      if (/[A-Z]/.test(p)) score += 10;
+      if (/[a-z]/.test(p)) score += 10;
+      if (/\d/.test(p)) score += 10;
+      if (/[^A-Za-z0-9]/.test(p)) score += 15;
+      if (/(.)\1{2,}/.test(p)) score -= 10;
+      score = Math.max(0, Math.min(100, score));
+
+      const label = score < 35 ? 'Слабый' : score < 70 ? 'Средний' : 'Сильный';
+      return { score, label };
+    }
+
+    function paintScore(score, label) {
+      const fill = el('meterFill');
+      fill.style.width = score + '%';
+      fill.style.background = score < 35 ? '#ff4d6d' : score < 70 ? 'var(--warn)' : 'var(--ok)';
+      el('scoreText').textContent = `${label} — ${score}/100`;
+    }
+
+    function saveHistory(value) {
+      const key = 'milinpass-history';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.unshift({ value, time: new Date().toLocaleString() });
+      localStorage.setItem(key, JSON.stringify(arr.slice(0, 10)));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const key = 'milinpass-history';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      el('history').innerHTML = arr.map(i => `<div class="item">${i.value}<br><span class="mini">${i.time}</span></div>`).join('') || '<div class="mini">Пока пусто</div>';
+    }
+
+    function create(type='password') {
+      const value = type === 'passphrase' ? generatePassphrase() : generatePassword();
+      el('password').value = value;
+      const {score, label} = scorePassword(value);
+      paintScore(score, label);
+      if (!value.includes('Выберите')) saveHistory(value);
+    }
+
+    el('length').addEventListener('input', (e) => {
+      el('lenVal').textContent = e.target.value;
+      create();
+    });
+    ['upper','lower','numbers','symbols','excludeAmbiguous'].forEach(id => el(id).addEventListener('change', () => create()));
+
+    el('generateBtn').addEventListener('click', () => create());
+    el('passphraseBtn').addEventListener('click', () => create('passphrase'));
+    el('copyBtn').addEventListener('click', async () => {
+      const val = el('password').value;
+      if (!val) return;
+      await navigator.clipboard.writeText(val);
+      const old = el('copyBtn').textContent;
+      el('copyBtn').textContent = 'Скопировано ✅';
+      setTimeout(() => el('copyBtn').textContent = old, 1200);
+    });
+
+    renderHistory();
+    create();
+  </script>
+</body>
+</html>
