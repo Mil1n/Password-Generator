@@ -14,6 +14,7 @@
       --accent2: #00e5ff;
       --ok: #00d084;
       --warn: #ffb020;
+      --danger: #ff4d6d;
     }
     * { box-sizing: border-box; }
     body {
@@ -29,7 +30,7 @@
       padding: 20px;
     }
     .app {
-      width: min(900px, 100%);
+      width: min(980px, 100%);
       background: var(--card);
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 24px;
@@ -43,6 +44,7 @@
     @media (max-width: 820px){ .app{ grid-template-columns: 1fr; } }
 
     h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); }
+    h3 { margin-top: 0; }
     .subtitle { color: var(--muted); margin: 0 0 20px; }
     .panel {
       background: rgba(255,255,255,.05);
@@ -56,6 +58,7 @@
       gap: 8px;
       align-items: center;
     }
+    @media (max-width: 540px){ .pass-wrap{ grid-template-columns: 1fr; } }
     #password {
       width: 100%;
       border: none;
@@ -76,11 +79,16 @@
       transition: .2s transform, .2s opacity;
     }
     button:hover { transform: translateY(-1px); opacity: .95; }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(0,229,255,.45);
+      outline-offset: 2px;
+    }
     .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent2)); }
     .btn-soft { background: rgba(255,255,255,.13); }
     .row { margin-top: 14px; }
     label { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    input[type=range] { width: 100%; }
+    input[type=range] { width: 100%; accent-color: var(--accent2); }
+    input[type=checkbox] { accent-color: var(--accent2); }
     .checks { display: grid; gap: 10px; margin-top: 10px; }
     .checks label { justify-content: start; gap: 10px; margin: 0; color: #dce6ff; }
     .inline { display:flex; gap:8px; flex-wrap: wrap; margin-top:14px; }
@@ -88,28 +96,42 @@
     .meter { height: 10px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; }
     #meterFill { height: 100%; width: 0; transition: .25s; }
     #scoreText { margin-top: 6px; font-size: 14px; }
+    .policy-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 12px 0 0; list-style: none; }
+    @media (max-width: 540px){ .policy-list{ grid-template-columns: 1fr; } }
+    .policy-list li {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .policy-list li.pass { color: #b9ffe3; background: rgba(0,208,132,.14); }
+    .policy-list li.fail { color: #ffd4dc; background: rgba(255,77,109,.14); }
+    .actions { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
     .history { max-height: 340px; overflow: auto; margin-top: 10px; display:grid; gap:8px; }
-    .item { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(0,0,0,.25); border-radius: 10px; padding: 9px; }
+    .item { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(0,0,0,.25); border-radius: 10px; padding: 9px; overflow-wrap: anywhere; }
+    .empty { color: var(--muted); font-size: 13px; }
   </style>
 </head>
 <body>
   <main class="app">
     <section>
       <h1>MilinPass ⚡</h1>
-      <p class="subtitle">Стильный генератор паролей с оценкой силы и историей.</p>
+      <p class="subtitle">Стильный генератор паролей с криптостойкой случайностью, оценкой силы и локальной историей.</p>
 
       <div class="panel">
         <div class="pass-wrap">
-          <input id="password" readonly />
-          <button id="copyBtn" class="btn-soft">Копировать</button>
+          <input id="password" readonly aria-label="Сгенерированный пароль" />
+          <button id="copyBtn" class="btn-soft" type="button">Копировать</button>
         </div>
 
         <div class="row">
           <label for="length">Длина: <strong id="lenVal">20</strong></label>
-          <input id="length" type="range" min="8" max="64" value="20" />
+          <input id="length" type="range" min="12" max="20" value="20" />
+          <div class="mini">Enterprise-профиль ограничивает длину диапазоном 12–20 символов.</div>
         </div>
 
-        <div class="checks">
+        <div class="checks" aria-label="Наборы символов">
           <label><input type="checkbox" id="upper" checked /> A–Z</label>
           <label><input type="checkbox" id="lower" checked /> a–z</label>
           <label><input type="checkbox" id="numbers" checked /> 0–9</label>
@@ -118,22 +140,26 @@
         </div>
 
         <div class="inline">
-          <button id="generateBtn" class="btn-primary">Сгенерировать</button>
-          <button id="passphraseBtn" class="btn-soft">Режим passphrase</button>
+          <button id="generateBtn" class="btn-primary" type="button">Сгенерировать</button>
+          <button id="passphraseBtn" class="btn-soft" type="button">Режим passphrase</button>
         </div>
 
         <div class="row">
           <div class="mini">Сила пароля</div>
-          <div class="meter"><div id="meterFill"></div></div>
-          <div id="scoreText">—</div>
+          <div class="meter" role="progressbar" aria-label="Оценка силы пароля" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="meterFill"></div></div>
+          <div id="scoreText" aria-live="polite">—</div>
+          <ul id="policyList" class="policy-list" aria-label="Проверки безопасности"></ul>
         </div>
       </div>
     </section>
 
     <aside>
       <div class="panel">
-        <h3 style="margin-top:0">История (локально)</h3>
-        <p class="mini">Последние 10 паролей сохраняются в браузере.</p>
+        <div class="actions">
+          <h3>История (локально)</h3>
+          <button id="clearHistoryBtn" class="btn-soft" type="button">Очистить</button>
+        </div>
+        <p class="mini">Последние 10 паролей сохраняются только в браузере и не отправляются на сервер.</p>
         <div id="history" class="history"></div>
       </div>
     </aside>
@@ -147,20 +173,42 @@
       numbers: '23456789',
       symbols: '!@#$%^&*()-_=+[]{};:,.<>/?'
     };
-    const ambiguous = new Set('O0Il1');
+    const commonPatterns = ['1234', 'qwerty', 'password', 'admin', 'letmein', '1111', '0000'];
+    const historyKey = 'milinpass-history';
 
     function randomInt(max) {
+      if (!Number.isSafeInteger(max) || max < 1) {
+        throw new Error('Некорректная верхняя граница генератора случайных чисел');
+      }
+
+      const range = 0x100000000;
+      const limit = range - (range % max);
       const a = new Uint32Array(1);
-      crypto.getRandomValues(a);
+
+      do {
+        crypto.getRandomValues(a);
+      } while (a[0] >= limit);
+
       return a[0] % max;
     }
 
+    function shuffle(value) {
+      const arr = [...value];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr.join('');
+    }
+
+    function selectedSets() {
+      return ['upper', 'lower', 'numbers', 'symbols']
+        .filter((id) => el(id).checked)
+        .map((id) => chars[id]);
+    }
+
     function buildPool() {
-      const selected = [];
-      if (el('upper').checked) selected.push(chars.upper);
-      if (el('lower').checked) selected.push(chars.lower);
-      if (el('numbers').checked) selected.push(chars.numbers);
-      if (el('symbols').checked) selected.push(chars.symbols);
+      const selected = selectedSets();
       if (!selected.length) return '';
 
       let pool = selected.join('');
@@ -172,66 +220,136 @@
 
     function generatePassword() {
       const len = Number(el('length').value);
+      const sets = selectedSets();
       const pool = buildPool();
       if (!pool) return 'Выберите хотя бы один набор символов';
+      if (sets.length > len) return 'Длина меньше количества выбранных наборов';
 
-      let out = '';
-      for (let i = 0; i < len; i++) {
-        let ch = pool[randomInt(pool.length)];
-        if (el('excludeAmbiguous').checked) {
-          while (ambiguous.has(ch)) ch = pool[randomInt(pool.length)];
-        }
-        out += ch;
-      }
-      return out;
+      const requiredChars = sets.map((set) => set[randomInt(set.length)]);
+      const randomChars = Array.from({ length: len - requiredChars.length }, () => pool[randomInt(pool.length)]);
+      return shuffle([...requiredChars, ...randomChars].join(''));
     }
 
     function generatePassphrase() {
-      const words = ['neon', 'rocket', 'pixel', 'orbit', 'quantum', 'cipher', 'shadow', 'matrix', 'aurora', 'hyper'];
-      return Array.from({length: 4}, () => words[randomInt(words.length)]).join('-') + randomInt(100);
+      const words = ['neon', 'rocket', 'pixel', 'orbit', 'cipher', 'shadow', 'matrix', 'aurora', 'hyper'];
+      const first = words[randomInt(words.length)];
+      const second = words[randomInt(words.length)];
+      const capitalized = first[0].toUpperCase() + first.slice(1);
+      return `${capitalized}-${second}${randomInt(90) + 10}${chars.symbols[randomInt(chars.symbols.length)]}`;
+    }
+
+    function hasCommonPattern(value) {
+      const normalized = value.toLowerCase();
+      return commonPatterns.some((pattern) => normalized.includes(pattern));
+    }
+
+    function policyChecks(p) {
+      return [
+        { label: '12–20 символов', pass: p.length >= 12 && p.length <= 20 },
+        { label: 'Есть A–Z', pass: /[A-Z]/.test(p) },
+        { label: 'Есть a–z', pass: /[a-z]/.test(p) },
+        { label: 'Есть цифра', pass: /\d/.test(p) },
+        { label: 'Есть спецсимвол', pass: /[^A-Za-z0-9]/.test(p) },
+        { label: 'Нет явных шаблонов', pass: !hasCommonPattern(p) && !/(.)\1{2,}/.test(p) }
+      ];
+    }
+
+    function estimateEntropy(p) {
+      let poolSize = 0;
+      if (/[A-Z]/.test(p)) poolSize += 26;
+      if (/[a-z]/.test(p)) poolSize += 26;
+      if (/\d/.test(p)) poolSize += 10;
+      if (/[^A-Za-z0-9]/.test(p)) poolSize += chars.symbols.length;
+      return poolSize ? Math.round(p.length * Math.log2(poolSize)) : 0;
     }
 
     function scorePassword(p) {
-      if (!p || p.includes('Выберите')) return {score: 0, label: 'Нет данных'};
-      let score = Math.min(50, p.length * 2);
-      if (/[A-Z]/.test(p)) score += 10;
-      if (/[a-z]/.test(p)) score += 10;
-      if (/\d/.test(p)) score += 10;
-      if (/[^A-Za-z0-9]/.test(p)) score += 15;
-      if (/(.)\1{2,}/.test(p)) score -= 10;
+      if (!p || p.includes('Выберите') || p.includes('Длина')) return {score: 0, label: 'Нет данных', entropy: 0, checks: []};
+
+      const checks = policyChecks(p);
+      const entropy = estimateEntropy(p);
+      let score = Math.min(100, Math.round((entropy / 100) * 100));
+      score -= checks.filter((check) => !check.pass).length * 12;
       score = Math.max(0, Math.min(100, score));
 
-      const label = score < 35 ? 'Слабый' : score < 70 ? 'Средний' : 'Сильный';
-      return { score, label };
+      const label = score < 45 ? 'Слабый' : score < 75 ? 'Средний' : score < 90 ? 'Сильный' : 'Очень сильный';
+      return { score, label, entropy, checks };
     }
 
-    function paintScore(score, label) {
+    function paintScore(score, label, entropy, checks = []) {
       const fill = el('meterFill');
+      const meter = document.querySelector('.meter');
       fill.style.width = score + '%';
-      fill.style.background = score < 35 ? '#ff4d6d' : score < 70 ? 'var(--warn)' : 'var(--ok)';
-      el('scoreText').textContent = `${label} — ${score}/100`;
+      fill.style.background = score < 45 ? 'var(--danger)' : score < 75 ? 'var(--warn)' : 'var(--ok)';
+      meter.setAttribute('aria-valuenow', String(score));
+      el('scoreText').textContent = `${label} — ${score}/100 · ~${entropy} бит энтропии`;
+      el('policyList').innerHTML = checks.map((check) => `<li class="${check.pass ? 'pass' : 'fail'}">${check.pass ? '✓' : '×'} ${check.label}</li>`).join('');
+    }
+
+    function readHistory() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
 
     function saveHistory(value) {
-      const key = 'milinpass-history';
-      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const arr = readHistory().filter((item) => item.value !== value);
       arr.unshift({ value, time: new Date().toLocaleString() });
-      localStorage.setItem(key, JSON.stringify(arr.slice(0, 10)));
+      localStorage.setItem(historyKey, JSON.stringify(arr.slice(0, 10)));
       renderHistory();
     }
 
     function renderHistory() {
-      const key = 'milinpass-history';
-      const arr = JSON.parse(localStorage.getItem(key) || '[]');
-      el('history').innerHTML = arr.map(i => `<div class="item">${i.value}<br><span class="mini">${i.time}</span></div>`).join('') || '<div class="mini">Пока пусто</div>';
+      const arr = readHistory();
+      const history = el('history');
+      history.innerHTML = '';
+
+      if (!arr.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Пока пусто';
+        history.append(empty);
+        return;
+      }
+
+      arr.forEach((item) => {
+        const row = document.createElement('div');
+        const date = document.createElement('span');
+        row.className = 'item';
+        row.textContent = item.value;
+        date.className = 'mini';
+        date.textContent = item.time;
+        row.append(document.createElement('br'), date);
+        history.append(row);
+      });
+    }
+
+    async function copyPassword() {
+      const val = el('password').value;
+      if (!val) return;
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(val);
+      } else {
+        el('password').select();
+        document.execCommand('copy');
+        el('password').blur();
+      }
+
+      const old = el('copyBtn').textContent;
+      el('copyBtn').textContent = 'Скопировано ✅';
+      setTimeout(() => el('copyBtn').textContent = old, 1200);
     }
 
     function create(type='password') {
       const value = type === 'passphrase' ? generatePassphrase() : generatePassword();
       el('password').value = value;
-      const {score, label} = scorePassword(value);
-      paintScore(score, label);
-      if (!value.includes('Выберите')) saveHistory(value);
+      const {score, label, entropy, checks} = scorePassword(value);
+      paintScore(score, label, entropy, checks);
+      if (!value.includes('Выберите') && !value.includes('Длина')) saveHistory(value);
     }
 
     el('length').addEventListener('input', (e) => {
@@ -242,13 +360,10 @@
 
     el('generateBtn').addEventListener('click', () => create());
     el('passphraseBtn').addEventListener('click', () => create('passphrase'));
-    el('copyBtn').addEventListener('click', async () => {
-      const val = el('password').value;
-      if (!val) return;
-      await navigator.clipboard.writeText(val);
-      const old = el('copyBtn').textContent;
-      el('copyBtn').textContent = 'Скопировано ✅';
-      setTimeout(() => el('copyBtn').textContent = old, 1200);
+    el('copyBtn').addEventListener('click', copyPassword);
+    el('clearHistoryBtn').addEventListener('click', () => {
+      localStorage.removeItem(historyKey);
+      renderHistory();
     });
 
     renderHistory();
