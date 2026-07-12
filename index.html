@@ -3,132 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090d1a" />
   <title>MilinPass — генератор паролей</title>
-  <style>
-    :root {
-      --bg: #090d1a;
-      --card: rgba(255,255,255,.08);
-      --text: #eef3ff;
-      --muted: #9fb0d4;
-      --accent: #7c4dff;
-      --accent2: #00e5ff;
-      --ok: #00d084;
-      --warn: #ffb020;
-      --danger: #ff4d6d;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px 700px at 0% 0%, #1f1b57 0, transparent 60%),
-                  radial-gradient(1000px 600px at 100% 100%, #004d64 0, transparent 60%),
-                  var(--bg);
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-    .app {
-      width: min(980px, 100%);
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 24px;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 20px 70px rgba(0,0,0,.45);
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 20px;
-      padding: 24px;
-    }
-    @media (max-width: 820px){ .app{ grid-template-columns: 1fr; } }
-
-    h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); }
-    h3 { margin-top: 0; }
-    .subtitle { color: var(--muted); margin: 0 0 20px; }
-    .panel {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.09);
-      border-radius: 18px;
-      padding: 16px;
-    }
-    .pass-wrap {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
-    @media (max-width: 540px){ .pass-wrap{ grid-template-columns: 1fr; } }
-    #password {
-      width: 100%;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      background: rgba(5,10,24,.8);
-      color: #fff;
-      font-size: 16px;
-      letter-spacing: .6px;
-    }
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 12px 14px;
-      cursor: pointer;
-      color: #fff;
-      font-weight: 700;
-      transition: .2s transform, .2s opacity;
-    }
-    button:hover { transform: translateY(-1px); opacity: .95; }
-    button:focus-visible, input:focus-visible {
-      outline: 3px solid rgba(0,229,255,.45);
-      outline-offset: 2px;
-    }
-    .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent2)); }
-    .btn-soft { background: rgba(255,255,255,.13); }
-    .row { margin-top: 14px; }
-    label { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    input[type=range] { width: 100%; accent-color: var(--accent2); }
-    input[type=checkbox] { accent-color: var(--accent2); }
-    .checks { display: grid; gap: 10px; margin-top: 10px; }
-    .checks label { justify-content: start; gap: 10px; margin: 0; color: #dce6ff; }
-    .inline { display:flex; gap:8px; flex-wrap: wrap; margin-top:14px; }
-    .mini { font-size: 12px; color: var(--muted); margin-top: 10px; }
-    .meter { height: 10px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; }
-    #meterFill { height: 100%; width: 0; transition: .25s; }
-    #scoreText { margin-top: 6px; font-size: 14px; }
-    .policy-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 12px 0 0; list-style: none; }
-    @media (max-width: 540px){ .policy-list{ grid-template-columns: 1fr; } }
-    .policy-list li {
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .policy-list li.pass { color: #b9ffe3; background: rgba(0,208,132,.14); }
-    .policy-list li.fail { color: #ffd4dc; background: rgba(255,77,109,.14); }
-    .actions { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-    .history { max-height: 340px; overflow: auto; margin-top: 10px; display:grid; gap:8px; }
-    .item { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(0,0,0,.25); border-radius: 10px; padding: 9px; overflow-wrap: anywhere; }
-    .empty { color: var(--muted); font-size: 13px; }
-  </style>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app">
     <section>
       <h1>MilinPass ⚡</h1>
-      <p class="subtitle">Стильный генератор паролей с криптостойкой случайностью, оценкой силы и локальной историей.</p>
+      <p class="subtitle">Стильный генератор паролей с криптостойкой случайностью, оценкой силы и приватной историей.</p>
+
+      <div id="cryptoWarning" class="warning hidden" role="alert">Ваш браузер не поддерживает Web Crypto API. Криптостойкая генерация недоступна.</div>
 
       <div class="panel">
         <div class="pass-wrap">
           <input id="password" readonly aria-label="Сгенерированный пароль" />
           <button id="copyBtn" class="btn-soft" type="button">Копировать</button>
+          <button id="clearPasswordBtn" class="btn-soft" type="button">Очистить</button>
         </div>
 
         <div class="row">
-          <label for="length">Длина: <strong id="lenVal">20</strong></label>
-          <input id="length" type="range" min="12" max="20" value="20" />
-          <div class="mini">Enterprise-профиль ограничивает длину диапазоном 12–20 символов.</div>
+          <label for="preset">Пресет</label>
+          <select id="preset">
+            <option value="maximum">Максимальная безопасность</option>
+            <option value="readable">Без похожих символов</option>
+            <option value="limited">Для сайтов с ограничениями</option>
+            <option value="alnum">Только буквы и цифры</option>
+            <option value="passphrase">Passphrase</option>
+            <option value="custom">Кастомный</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label for="length">Длина: <strong id="lenVal">32</strong></label>
+          <input id="length" type="range" min="12" max="64" value="32" />
+          <div class="mini">Диапазон 12–64 символа подходит и для обычных сайтов, и для менеджеров паролей.</div>
         </div>
 
         <div class="checks" aria-label="Наборы символов">
@@ -139,9 +49,34 @@
           <label><input type="checkbox" id="excludeAmbiguous" /> Исключить похожие (O0Il1)</label>
         </div>
 
+        <details id="passphraseSettings" class="row">
+          <summary>Настройки passphrase</summary>
+          <div class="settings-grid">
+            <label for="wordCount">Слов: <strong id="wordCountVal">4</strong></label>
+            <input id="wordCount" type="range" min="3" max="6" value="4" />
+            <label for="separator">Разделитель</label>
+            <select id="separator">
+              <option value="-">-</option>
+              <option value="_">_</option>
+              <option value=".">.</option>
+              <option value=" ">пробел</option>
+            </select>
+            <label><input type="checkbox" id="phraseNumber" checked /> Добавить число</label>
+            <label><input type="checkbox" id="phraseSymbol" checked /> Добавить спецсимвол</label>
+            <label for="wordList">Словарь</label>
+            <select id="wordList">
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
+            </select>
+          </div>
+        </details>
+
+        <div id="weakWarning" class="warning hidden" role="status"></div>
+
         <div class="inline">
           <button id="generateBtn" class="btn-primary" type="button">Сгенерировать</button>
           <button id="passphraseBtn" class="btn-soft" type="button">Режим passphrase</button>
+          <button id="themeBtn" class="btn-soft" type="button">Тема</button>
         </div>
 
         <div class="row">
@@ -157,217 +92,16 @@
       <div class="panel">
         <div class="actions">
           <h3>История (локально)</h3>
+          <button id="toggleHistoryBtn" class="btn-soft" type="button">Показать</button>
           <button id="clearHistoryBtn" class="btn-soft" type="button">Очистить</button>
         </div>
-        <p class="mini">Последние 10 паролей сохраняются только в браузере и не отправляются на сервер.</p>
-        <div id="history" class="history"></div>
+        <label class="history-option"><input type="checkbox" id="saveHistory" /> Сохранять историю</label>
+        <p class="mini">История отключена по умолчанию. Если включить, последние 10 значений сохраняются только в браузере.</p>
+        <div id="history" class="history hidden"></div>
       </div>
     </aside>
   </main>
-
-  <script>
-    const el = (id) => document.getElementById(id);
-    const chars = {
-      upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
-      lower: 'abcdefghijkmnopqrstuvwxyz',
-      numbers: '23456789',
-      symbols: '!@#$%^&*()-_=+[]{};:,.<>/?'
-    };
-    const commonPatterns = ['1234', 'qwerty', 'password', 'admin', 'letmein', '1111', '0000'];
-    const historyKey = 'milinpass-history';
-
-    function randomInt(max) {
-      if (!Number.isSafeInteger(max) || max < 1) {
-        throw new Error('Некорректная верхняя граница генератора случайных чисел');
-      }
-
-      const range = 0x100000000;
-      const limit = range - (range % max);
-      const a = new Uint32Array(1);
-
-      do {
-        crypto.getRandomValues(a);
-      } while (a[0] >= limit);
-
-      return a[0] % max;
-    }
-
-    function shuffle(value) {
-      const arr = [...value];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = randomInt(i + 1);
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr.join('');
-    }
-
-    function selectedSets() {
-      return ['upper', 'lower', 'numbers', 'symbols']
-        .filter((id) => el(id).checked)
-        .map((id) => chars[id]);
-    }
-
-    function buildPool() {
-      const selected = selectedSets();
-      if (!selected.length) return '';
-
-      let pool = selected.join('');
-      if (!el('excludeAmbiguous').checked) {
-        pool += 'O0Il1';
-      }
-      return pool;
-    }
-
-    function generatePassword() {
-      const len = Number(el('length').value);
-      const sets = selectedSets();
-      const pool = buildPool();
-      if (!pool) return 'Выберите хотя бы один набор символов';
-      if (sets.length > len) return 'Длина меньше количества выбранных наборов';
-
-      const requiredChars = sets.map((set) => set[randomInt(set.length)]);
-      const randomChars = Array.from({ length: len - requiredChars.length }, () => pool[randomInt(pool.length)]);
-      return shuffle([...requiredChars, ...randomChars].join(''));
-    }
-
-    function generatePassphrase() {
-      const words = ['neon', 'rocket', 'pixel', 'orbit', 'cipher', 'shadow', 'matrix', 'aurora', 'hyper'];
-      const first = words[randomInt(words.length)];
-      const second = words[randomInt(words.length)];
-      const capitalized = first[0].toUpperCase() + first.slice(1);
-      return `${capitalized}-${second}${randomInt(90) + 10}${chars.symbols[randomInt(chars.symbols.length)]}`;
-    }
-
-    function hasCommonPattern(value) {
-      const normalized = value.toLowerCase();
-      return commonPatterns.some((pattern) => normalized.includes(pattern));
-    }
-
-    function policyChecks(p) {
-      return [
-        { label: '12–20 символов', pass: p.length >= 12 && p.length <= 20 },
-        { label: 'Есть A–Z', pass: /[A-Z]/.test(p) },
-        { label: 'Есть a–z', pass: /[a-z]/.test(p) },
-        { label: 'Есть цифра', pass: /\d/.test(p) },
-        { label: 'Есть спецсимвол', pass: /[^A-Za-z0-9]/.test(p) },
-        { label: 'Нет явных шаблонов', pass: !hasCommonPattern(p) && !/(.)\1{2,}/.test(p) }
-      ];
-    }
-
-    function estimateEntropy(p) {
-      let poolSize = 0;
-      if (/[A-Z]/.test(p)) poolSize += 26;
-      if (/[a-z]/.test(p)) poolSize += 26;
-      if (/\d/.test(p)) poolSize += 10;
-      if (/[^A-Za-z0-9]/.test(p)) poolSize += chars.symbols.length;
-      return poolSize ? Math.round(p.length * Math.log2(poolSize)) : 0;
-    }
-
-    function scorePassword(p) {
-      if (!p || p.includes('Выберите') || p.includes('Длина')) return {score: 0, label: 'Нет данных', entropy: 0, checks: []};
-
-      const checks = policyChecks(p);
-      const entropy = estimateEntropy(p);
-      let score = Math.min(100, Math.round((entropy / 100) * 100));
-      score -= checks.filter((check) => !check.pass).length * 12;
-      score = Math.max(0, Math.min(100, score));
-
-      const label = score < 45 ? 'Слабый' : score < 75 ? 'Средний' : score < 90 ? 'Сильный' : 'Очень сильный';
-      return { score, label, entropy, checks };
-    }
-
-    function paintScore(score, label, entropy, checks = []) {
-      const fill = el('meterFill');
-      const meter = document.querySelector('.meter');
-      fill.style.width = score + '%';
-      fill.style.background = score < 45 ? 'var(--danger)' : score < 75 ? 'var(--warn)' : 'var(--ok)';
-      meter.setAttribute('aria-valuenow', String(score));
-      el('scoreText').textContent = `${label} — ${score}/100 · ~${entropy} бит энтропии`;
-      el('policyList').innerHTML = checks.map((check) => `<li class="${check.pass ? 'pass' : 'fail'}">${check.pass ? '✓' : '×'} ${check.label}</li>`).join('');
-    }
-
-    function readHistory() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(historyKey) || '[]');
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveHistory(value) {
-      const arr = readHistory().filter((item) => item.value !== value);
-      arr.unshift({ value, time: new Date().toLocaleString() });
-      localStorage.setItem(historyKey, JSON.stringify(arr.slice(0, 10)));
-      renderHistory();
-    }
-
-    function renderHistory() {
-      const arr = readHistory();
-      const history = el('history');
-      history.innerHTML = '';
-
-      if (!arr.length) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = 'Пока пусто';
-        history.append(empty);
-        return;
-      }
-
-      arr.forEach((item) => {
-        const row = document.createElement('div');
-        const date = document.createElement('span');
-        row.className = 'item';
-        row.textContent = item.value;
-        date.className = 'mini';
-        date.textContent = item.time;
-        row.append(document.createElement('br'), date);
-        history.append(row);
-      });
-    }
-
-    async function copyPassword() {
-      const val = el('password').value;
-      if (!val) return;
-
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(val);
-      } else {
-        el('password').select();
-        document.execCommand('copy');
-        el('password').blur();
-      }
-
-      const old = el('copyBtn').textContent;
-      el('copyBtn').textContent = 'Скопировано ✅';
-      setTimeout(() => el('copyBtn').textContent = old, 1200);
-    }
-
-    function create(type='password') {
-      const value = type === 'passphrase' ? generatePassphrase() : generatePassword();
-      el('password').value = value;
-      const {score, label, entropy, checks} = scorePassword(value);
-      paintScore(score, label, entropy, checks);
-      if (!value.includes('Выберите') && !value.includes('Длина')) saveHistory(value);
-    }
-
-    el('length').addEventListener('input', (e) => {
-      el('lenVal').textContent = e.target.value;
-      create();
-    });
-    ['upper','lower','numbers','symbols','excludeAmbiguous'].forEach(id => el(id).addEventListener('change', () => create()));
-
-    el('generateBtn').addEventListener('click', () => create());
-    el('passphraseBtn').addEventListener('click', () => create('passphrase'));
-    el('copyBtn').addEventListener('click', copyPassword);
-    el('clearHistoryBtn').addEventListener('click', () => {
-      localStorage.removeItem(historyKey);
-      renderHistory();
-    });
-
-    renderHistory();
-    create();
-  </script>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
 </body>
 </html>
