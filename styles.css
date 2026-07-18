@@ -65,7 +65,7 @@ h3 { margin: 0; }
   align-items: center;
 }
 @media (max-width: 620px){ .pass-wrap{ grid-template-columns: 1fr; } }
-#password, select {
+#password, select, textarea, input[type=text], input[type=number] {
   width: 100%;
   border: none;
   border-radius: 12px;
@@ -74,7 +74,7 @@ h3 { margin: 0; }
   color: #fff;
   font-size: 16px;
 }
-:root[data-theme="light"] #password, :root[data-theme="light"] select { background: #fff; color: #12182a; }
+:root[data-theme="light"] #password, :root[data-theme="light"] select, :root[data-theme="light"] textarea, :root[data-theme="light"] input[type=text], :root[data-theme="light"] input[type=number] { background: #fff; color: #12182a; }
 #password { letter-spacing: .6px; }
 button {
   border: none;
@@ -86,7 +86,7 @@ button {
   transition: .2s transform, .2s opacity;
 }
 button:hover { transform: translateY(-1px); opacity: .95; }
-button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: 3px solid rgba(0,229,255,.45);
   outline-offset: 2px;
 }
@@ -119,4 +119,5 @@ input[type=checkbox] { accent-color: var(--accent2); }
 @media (max-width: 620px){ .settings-grid{ grid-template-columns: 1fr; } }
 summary { cursor: pointer; color: var(--text); font-weight: 700; }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 12px 16px; border-radius: 999px; background: rgba(5,10,24,.92); color: #fff; opacity: 0; pointer-events: none; transition: .2s opacity, .2s translate; }
+textarea { min-height: 130px; resize: vertical; margin-top: 12px; }
 .toast.show { opacity: 1; translate: 0 -6px; }

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#090d1a" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; manifest-src 'self'; worker-src 'self'" />
   <title>MilinPass — генератор паролей</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
@@ -19,6 +20,7 @@
       <div class="panel">
         <div class="pass-wrap">
           <input id="password" readonly aria-label="Сгенерированный пароль" />
+          <button id="revealBtn" class="btn-soft" type="button" aria-pressed="true">Скрыть</button>
           <button id="copyBtn" class="btn-soft" type="button">Копировать</button>
           <button id="clearPasswordBtn" class="btn-soft" type="button">Очистить</button>
         </div>
@@ -68,8 +70,39 @@
               <option value="en">English</option>
               <option value="ru">Русский</option>
             </select>
+            <label for="caseMode">Регистр</label>
+            <select id="caseMode">
+              <option value="title">Title Case</option>
+              <option value="lower">lowercase</option>
+              <option value="upper">UPPERCASE</option>
+            </select>
           </div>
         </details>
+
+        <details class="row">
+          <summary>Правила совместимости сайтов</summary>
+          <div class="settings-grid">
+            <label for="customSymbols">Разрешённые спецсимволы</label>
+            <input id="customSymbols" type="text" value="!@#$%^&*()-_=+[]{};:,.<>/?" aria-label="Разрешённые спецсимволы" />
+            <label for="minNumbers">Минимум цифр</label>
+            <input id="minNumbers" type="number" min="0" max="8" value="1" />
+            <label for="minSymbols">Минимум спецсимволов</label>
+            <input id="minSymbols" type="number" min="0" max="8" value="1" />
+          </div>
+        </details>
+
+        <details class="row">
+          <summary>Приватность и настройки</summary>
+          <div class="settings-grid">
+            <label for="autoClearSeconds">Автоочистка поля, сек.</label>
+            <input id="autoClearSeconds" type="number" min="0" max="300" value="0" />
+            <button id="exportSettingsBtn" class="btn-soft" type="button">Экспорт настроек</button>
+            <button id="importSettingsBtn" class="btn-soft" type="button">Импорт настроек</button>
+            <button id="resetSettingsBtn" class="btn-soft" type="button">Сбросить всё</button>
+          </div>
+        </details>
+
+        <textarea id="settingsTransfer" class="hidden" aria-label="Импорт и экспорт настроек"></textarea>
 
         <div id="weakWarning" class="warning hidden" role="status"></div>
 
@@ -92,7 +125,7 @@
       <div class="panel">
         <div class="actions">
           <h3>История (локально)</h3>
-          <button id="toggleHistoryBtn" class="btn-soft" type="button">Показать</button>
+          <button id="toggleHistoryBtn" class="btn-soft" type="button" aria-expanded="false">Показать</button>
           <button id="clearHistoryBtn" class="btn-soft" type="button">Очистить</button>
         </div>
         <label class="history-option"><input type="checkbox" id="saveHistory" /> Сохранять историю</label>
@@ -102,6 +135,6 @@
     </aside>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

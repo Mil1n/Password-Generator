@@ -1,5 +1,5 @@
-const CACHE_NAME = 'milinpass-v1';
-const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.json', './icon.svg'];
+const CACHE_NAME = 'milinpass-v2';
+const ASSETS = ['./', './index.html', './styles.css', './app.js', './core.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
